@@ -17,10 +17,12 @@ typedef enum {
 
 userChoice_t getUserChoice();
 
-void akinator_guess(node_t *root);
-void akinator_description(node_t *root);
-void akinator_save(node_t *root);
-void akinator_load(node_t **root);
+int findAndPrint(node_t *node, const char *name);
+
+void akinatorGuess(node_t *root);
+void akinatorDescription(node_t *root);
+void akinatorSave(node_t *root);
+void akinatorLoad(node_t **root);
 
 int main() {
     logInit("log.htm");
@@ -37,16 +39,16 @@ int main() {
 
         switch (choice) {
             case GUESS:        
-                akinator_guess(root);
+                akinatorGuess(root);
                 break;
             case DESCRIPTION:
-                akinator_description(root);
+                akinatorDescription(root);
                 break;
             case SAVE:
-                akinator_save(root);
+                akinatorSave(root);
                 break;
             case LOAD:
-                akinator_load(&root);
+                akinatorLoad(&root);
                 break;
             case EXIT:
                 runned = false;
@@ -96,7 +98,7 @@ userChoice_t getUserChoice() {
     return ERROR;
 }
 
-void akinator_guess(node_t *root) {
+void akinatorGuess(node_t *root) {
     assert(root);
 
     node_t *node = root;
@@ -159,9 +161,50 @@ void akinator_guess(node_t *root) {
     }
 }
 
-void akinator_description(node_t *root) {}
+int findAndPrint(node_t *node, const char *name) {
+    assert(name);
 
-void akinator_save(node_t *root) {
+    if (!node) return 0;
+
+    if (!strcmp(node->data, name)) {
+        printf("%s: ", node->data);
+        return 1;
+    }
+
+    int level = 0;
+
+    if ((level = findAndPrint(node->left, name))) {
+        if (level == 1) printf("%s",   node->data);
+        else            printf(", %s", node->data);
+        return level + 1;
+    }
+
+    if ((level = findAndPrint(node->right, name))) {
+        if (level == 1) printf("не %s",   node->data);
+        else            printf(", не %s", node->data);
+        return level + 1;
+    }
+
+    return 0;
+}
+
+void akinatorDescription(node_t *root) {
+    printf("Enter a name, if I know it, I will find and say what it is\n>>> ");
+    char name[101] = {};
+    while (scanf("%s", name) != 1) {
+        clearInputBuffer();
+        printf("smth went wrong, repeat please\n>>> ");
+    }
+    clearInputBuffer();
+
+    if (!findAndPrint(root, name)) {
+        printf("I don't know\n");
+    } else {
+        printf(".\n");
+    }
+}
+
+void akinatorSave(node_t *root) {
     assert(root);
 
     printf("Enter a filename to save\n>>> ");
@@ -175,7 +218,7 @@ void akinator_save(node_t *root) {
     treeWrite(root, filename);
 }
 
-void akinator_load(node_t **root) {
+void akinatorLoad(node_t **root) {
     assert(root);
     assert(*root);
 
