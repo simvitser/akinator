@@ -1,2 +1,1 @@
-# sort_tree
-# akinator
+# Akinator
