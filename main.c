@@ -5,6 +5,7 @@
 #include "tree.h"
 #include "log.h"
 #include "common.h"
+#include "stack.h"
 
 typedef enum {
     ERROR,
@@ -12,17 +13,19 @@ typedef enum {
     DESCRIPTION,
     SAVE,
     LOAD,
+    DIFF,
     EXIT
 } userChoice_t;
 
 userChoice_t getUserChoice();
 
-int findAndPrint(node_t *node, const char *name);
+bool findAndStack(node_t *node, const char *name, stack_t *stack);
 
 void akinatorGuess(node_t *root);
 void akinatorDescription(node_t *root);
 void akinatorSave(node_t *root);
 void akinatorLoad(node_t **root);
+void akinatorDiff(node_t *root);
 
 int main() {
     logInit("log.htm");
@@ -50,6 +53,9 @@ int main() {
             case LOAD:
                 akinatorLoad(&root);
                 break;
+            case DIFF:
+                akinatorDiff(root);
+                break;
             case EXIT:
                 runned = false;
                 break;
@@ -73,13 +79,15 @@ int main() {
 userChoice_t getUserChoice() {
     printf("=====Akinator ver 0.1=====\n");
     printf("What do you want to do?\n");
-    printf("1) Guess    2) Descritption\n");
-    printf("3) Save     4) Load\n");
-    printf("5) Exit\n");
+    printf("1) Guess      2) Descritption\n");
+    printf("3) Save       4) Load\n");
+    printf("5) Difference 6) Exit\n");
     printf(">>> ");
 
+    SAY("Привет!");
+
     int ans = 0;
-    while (scanf("%d", &ans) == 1 && !(1 <= ans && ans <= 5)) {
+    while (scanf("%d", &ans) == 1 && !(1 <= ans && ans <= 6)) {
         printf("Stupid leather bag! Enter better!\n");
         printf(">>> ");
     }
@@ -91,7 +99,8 @@ userChoice_t getUserChoice() {
         case 2:  return DESCRIPTION;
         case 3:  return SAVE;
         case 4:  return LOAD;
-        case 5:  return EXIT;
+        case 5:  return DIFF;
+        case 6:  return EXIT;
         default: return ERROR;
     }
 
@@ -105,6 +114,7 @@ void akinatorGuess(node_t *root) {
     while (node) {
         printf("%s?\n", node->data);
         printf("[Y/n] ");
+        say("%s?\n", node->data);
         
         int ans = getchar();
         if (ans != '\n') clearInputBuffer();
@@ -114,6 +124,7 @@ void akinatorGuess(node_t *root) {
                 node = node->right;
             } else {
                 printf(":( I don't know... What was that?\n>>> ");
+                SAY("Я не знаю что это такое");
                 
                 char correct_answer[MAX_NODE_LEN + 1] = {};
                 while (scanf("%" STR(MAX_NODE_LEN) "[^\n]", correct_answer) != 1) {
@@ -123,6 +134,7 @@ void akinatorGuess(node_t *root) {
                 clearInputBuffer();
                 
                 printf("What is the difference? %s...\n>>> ", correct_answer);
+                SAY("А чем они отличаются?");
 
                 char question[MAX_NODE_LEN + 1] = {};
                 while (scanf("%" STR(MAX_NODE_LEN) "[^\n]", question) != 1) {
@@ -149,67 +161,84 @@ void akinatorGuess(node_t *root) {
 
                 return;
             }
-        }
-        else {
+        } else if (ans == 'Y' || ans == 'y' || ans == '\n') {
             if (node->left) {
                 node = node->left;
             } else {
                 printf("This was: %s. I'm very clever!\n", node->data);
+                say("А я угадал! это %s", node->data);
                 return;
             }
         }
     }
 }
 
-int findAndPrint(node_t *node, const char *name) {
+bool findAndStack(node_t *node, const char *name, stack_t *stack) {
     assert(name);
 
-    if (!node) return 0;
+    if (!node) return false;
+
+    char buffer[MAX_NODE_LEN + 1] = {};
 
     if (!strcmp(node->data, name)) {
-        printf("%s: ", node->data);
-        return 1;
+        return true;
     }
 
-    int level = 0;
 
-    if ((level = findAndPrint(node->left, name))) {
-        if (level == 1) printf("%s",   node->data);
-        else            printf(", %s", node->data);
-        return level + 1;
+    if (findAndStack(node->left, name, stack)) {
+        sprintf(buffer, "%s", node->data);
+
+        stackPush(stack, strdup(buffer));
+
+        return true;
     }
 
-    if ((level = findAndPrint(node->right, name))) {
-        if (level == 1) printf("не %s",   node->data);
-        else            printf(", не %s", node->data);
-        return level + 1;
+    if (findAndStack(node->right, name, stack)) {
+        sprintf(buffer, "не %s", node->data);
+
+        stackPush(stack, strdup(buffer));
+
+        return true;
     }
 
-    return 0;
+    return false;
 }
 
 void akinatorDescription(node_t *root) {
     printf("Enter a name, if I know it, I will find and say what it is\n>>> ");
-    char name[101] = {};
-    while (scanf("%s", name) != 1) {
+    char name[MAX_NODE_LEN + 1] = {};
+    while (scanf("%" STR(MAX_NODE_LEN) "s", name) != 1) {
         clearInputBuffer();
         printf("smth went wrong, repeat please\n>>> ");
     }
     clearInputBuffer();
 
-    if (!findAndPrint(root, name)) {
-        printf("I don't know\n");
+    stack_t stack = {};
+    stackCtor(&stack);
+
+    if (!findAndStack(root, name, &stack)) {
+        printf("I don't know who is %s\n", name);
     } else {
-        printf(".\n");
+        printf("%s is: ", name);
+        char *s = NULL;
+        while (getStackSize(&stack) != 1) {
+            s = stackPop(&stack);
+            printf("%s, ", s);
+            free(s);
+        }
+        printf("%s.\n", (s = stackPop(&stack)));
+        free(s);
     }
+
+    stackDtor(&stack);
 }
 
 void akinatorSave(node_t *root) {
     assert(root);
 
     printf("Enter a filename to save\n>>> ");
-    char filename[101] = {};
-    while (scanf("%s", filename) != 1) {
+    char filename[MAX_NODE_LEN + 1] = {};
+    while (scanf("%" STR(MAX_NODE_LEN) "s", filename) != 1) {
         clearInputBuffer();
         printf("smth went wrong, repeat please\n>>> ");
     }
@@ -225,8 +254,8 @@ void akinatorLoad(node_t **root) {
     node_t *new_root = NULL;
     while (!new_root) {
         printf("Enter a filename to load\n>>> ");
-        char filename[101] = {};
-        while (scanf("%s", filename) != 1) {
+        char filename[MAX_NODE_LEN + 1] = {};
+        while (scanf("%" STR(MAX_NODE_LEN) "s", filename) != 1) {
             clearInputBuffer();
             printf("smth went wrong, repeat please\n>>> ");
         }
@@ -239,4 +268,80 @@ void akinatorLoad(node_t **root) {
 
     treeDestroy(*root);
     *root = new_root;
+}
+
+void akinatorDiff(node_t *root) {
+    assert(root);
+
+    printf("Enter a first name, if I know it, I will find and say what it is\n>>> ");
+    char name1[MAX_NODE_LEN + 1] = {};
+    while (scanf("%" STR(MAX_NODE_LEN) "s", name1) != 1) {
+        clearInputBuffer();
+        printf("smth went wrong, repeat please\n>>> ");
+    }
+    clearInputBuffer();
+
+    stack_t stack1 = {};
+    stack_t stack2 = {};
+    stackCtor(&stack1);
+
+    if (!findAndStack(root, name1, &stack1)) {
+        printf("I don't know who is %s\n", name1);
+
+        stackDtor(&stack1);
+
+        return;
+    } else {
+        printf("Enter a second name, if I know it, I will find and say what it is\n>>> ");
+        char name2[MAX_NODE_LEN + 1] = {};
+        while (scanf("%" STR(MAX_NODE_LEN) "s", name2) != 1) {
+            clearInputBuffer();
+            printf("smth went wrong, repeat please\n>>> ");
+        }
+        clearInputBuffer();
+
+        stackCtor(&stack2);
+
+        if (!findAndStack(root, name2, &stack2)) {
+            printf("I don't know who is %s\n", name2);
+        } else {
+            printf("%s and %s are same in: ", name1, name2);
+
+            float k = 0;
+            float max_size = (float)MAX(getStackSize(&stack1), getStackSize(&stack2));
+
+            while (getStackSize(&stack1) && getStackSize(&stack2)) {
+                char *s1 = stackPop(&stack1);
+                char *s2 = stackPop(&stack2);
+
+                if (!strcmp(s1, s2)) {
+                    k++;
+                    printf("%s, ", s1);
+                    free(s1);
+                    free(s2);
+                } else {
+                    printf("но %s is %s", name1, s1);
+                    free(s1);
+                    while (getStackSize(&stack1)) {
+                        s1 = stackPop(&stack1);
+                        printf(", %s", s1);
+                        free(s1);
+                    }
+                    printf(", а %s is %s", name2, s2);
+                    free(s2);
+                    while (getStackSize(&stack2)) {
+                        s2 = stackPop(&stack2);
+                        printf(", %s", s2);
+                        free(s2);
+                    }
+                    break;
+                }
+            }
+
+            printf("\n%s на %f%% %s\n", name1, k * 100 / max_size, name2);
+        }
+    }
+
+    stackDtor(&stack1);
+    stackDtor(&stack2);
 }

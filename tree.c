@@ -132,7 +132,11 @@ static void writeNodeGraph(FILE *file, node_t *node) {
 
     if (node->left) {
         fprintf(file, "V%p:left -> V%p[label=\"Да\"]\n", node, node->left);
-        fprintf(file, "V%p[shape=\"record\", style=\"filled\", color=\"#008000\", fillcolor=\"#C0FFC0\"]\n", node->left);
+        if (node->left->right || node->left->left) {
+            fprintf(file, "V%p[shape=\"record\", style=\"filled\", color=\"#008000\", fillcolor=\"#C0FFC0\"]\n", node->left);
+        } else {
+            fprintf(file, "V%p[shape=\"record\", style=\"filled\", color=\"#00C000\", fillcolor=\"#80FF80\"]\n", node->left);
+        }
         writeNodeGraph(file, node->left);
     } else if (node->right) {
         fprintf(file, "V%p:left -> NULL%p[color=\"white\"]\n", node, node);
@@ -140,7 +144,11 @@ static void writeNodeGraph(FILE *file, node_t *node) {
     }
     if (node->right) {
         fprintf(file, "V%p:right -> V%p[label=\"Нет\"]\n", node, node->right);
-        fprintf(file, "V%p[shape=\"Mrecord\", style=\"filled\", color=\"#800000\", fillcolor=\"#FFC0C0\"]\n", node->right);
+        if (node->right->right || node->right->left) {
+            fprintf(file, "V%p[shape=\"Mrecord\", style=\"filled\", color=\"#800000\", fillcolor=\"#FFC0C0\"]\n", node->right);
+        } else {
+            fprintf(file, "V%p[shape=\"Mrecord\", style=\"filled\", color=\"#C00000\", fillcolor=\"#FF8080\"]\n", node->right);
+        }
         writeNodeGraph(file, node->right);
     } else if (node->left) {
         fprintf(file, "V%p:right -> NULL%p[color=\"white\"]\n", node, node);

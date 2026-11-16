@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include "common.h"
 
@@ -113,4 +114,19 @@ size_t parseBuffer(char *buffer, const size_t buffer_len, String **arr) {
     *arr = pointer;
     
     return arr_len;
+}
+
+void say(const char *s, ...) {
+    char buffer[1000] = {};
+    char tmp[1000] = {};
+
+    va_list list;
+
+    va_start(list, s);
+
+    
+    sprintf(tmp, "festival -b '(voice_msu_ru_nsh_clunits)' '(SayText \"%s\")' '(quit)'", s);
+    vsprintf(buffer, tmp, list);
+
+    system(buffer);
 }

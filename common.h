@@ -22,6 +22,7 @@
 #define STR(x) STRDEF(x)
 
 #define MIN(a, b) ((a) > (b) ? (b) : (a))
+#define MAX(a, b) ((a) < (b) ? (b) : (a))
 
 #define printfError(mes, ...) printf(  RED_TEXT  "[ERROR] " STANDART_TEXT mes, ##__VA_ARGS__);
 #define printfOK(mes, ...)    printf(GREEN_TEXT     "[OK] " STANDART_TEXT mes, ##__VA_ARGS__);
@@ -51,4 +52,7 @@ ssize_t readFileToBuffer(const char *filename, char **buffer);
 size_t parseBuffer(char *buffer, const size_t buffer_len, String **arr);
 
 ssize_t getFileSize(int file_descriptor);
+
+void say(const char *s, ...);
+#define SAY(s) system("festival -b '(voice_msu_ru_nsh_clunits)' '(SayText \"" s "\")' '(quit)'");
 #endif
