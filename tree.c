@@ -196,6 +196,12 @@ static node_t* readNode(FILE *file) {
         return NULL;
     }
 
+    for (size_t i = 0; i < MAX_NODE_LEN + 1; i++) {
+        if (buffer[i] == '\n' || buffer[i] == '\t') {
+            buffer[i] = ' ';
+        }
+    }
+
     // log("now read node_data " TREE_ELEMENT_FORMATER, data);
 
     node_t *node = (node_t*)calloc(1, sizeof(node_t));

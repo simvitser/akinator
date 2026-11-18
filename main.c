@@ -206,6 +206,7 @@ bool findAndStack(node_t *node, const char *name, stack_t *stack) {
 
 void akinatorDescription(node_t *root) {
     printf("Enter a name, if I know it, I will find and say what it is\n>>> ");
+    SAY("Введите имя");
     char name[MAX_NODE_LEN + 1] = {};
     while (scanf("%" STR(MAX_NODE_LEN) "s", name) != 1) {
         clearInputBuffer();
@@ -217,17 +218,26 @@ void akinatorDescription(node_t *root) {
     stackCtor(&stack);
 
     if (!findAndStack(root, name, &stack)) {
+        say("Я не знаю кто такой %s", name);
         printf("I don't know who is %s\n", name);
     } else {
-        printf("%s is: ", name);
+        char buffer[MAX_NODE_LEN * 100] = {};
+        char *buffer_ptr = buffer;
+
+        sprintf(buffer_ptr, "%s is: ", name);
+        buffer_ptr = buffer + strlen(buffer);
         char *s = NULL;
         while (getStackSize(&stack) != 1) {
             s = stackPop(&stack);
-            printf("%s, ", s);
+            sprintf(buffer_ptr, "%s, ", s);
+            buffer_ptr = buffer + strlen(buffer);
             free(s);
         }
-        printf("%s.\n", (s = stackPop(&stack)));
+        sprintf(buffer_ptr, "%s.\n", (s = stackPop(&stack)));
         free(s);
+
+        printf("%s", buffer);
+        say("%s", buffer);
     }
 
     stackDtor(&stack);
