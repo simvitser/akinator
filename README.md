@@ -17,6 +17,7 @@
 - Реализован графический дамп дерева БД в лог-файл
 
 дамп:
+
 <img width="857" height="633" alt="image" src="https://github.com/user-attachments/assets/2b38e1bd-44fe-4cd3-866f-9d356ae82e01" />
 
 
